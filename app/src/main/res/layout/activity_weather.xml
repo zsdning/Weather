@@ -248,7 +248,6 @@
                     <ImageView android:id="@+id/today_weather"
                         style="@style/ViewStyle"
                         android:layout_weight="2"
-                        android:layout_height="15dp"
                         android:src="@drawable/d01"
                         />
                     <TextView
@@ -281,7 +280,6 @@
                     <ImageView android:id="@+id/tomorrow_weather"
                         style="@style/ViewStyle"
                         android:layout_weight="2"
-                        android:layout_height="15dp"
                         android:src="@drawable/d01"
                         />
                     <TextView
@@ -314,7 +312,6 @@
                     <ImageView android:id="@+id/third_weather"
                         style="@style/ViewStyle"
                         android:layout_weight="2"
-                        android:layout_height="15dp"
                         android:src="@drawable/d01"
                         />
                     <TextView
@@ -347,7 +344,6 @@
                     <ImageView android:id="@+id/forth_weather"
                         style="@style/ViewStyle"
                         android:layout_weight="2"
-                        android:layout_height="15dp"
                         android:src="@drawable/d01"
                         />
                     <TextView

@@ -1,8 +1,13 @@
 package com.example.administrator.weather;
 
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.util.Log;
 import android.widget.ImageView;
 import android.widget.ScrollView;
@@ -14,6 +19,7 @@ import com.example.administrator.weather.Bean.PMBean;
 import com.example.administrator.weather.Bean.WeatherBean;
 import com.example.administrator.weather.Util.HttpCallbackListener;
 import com.example.administrator.weather.Util.HttpUtil;
+import com.example.administrator.weather.service.WeatherService;
 import com.handmark.pulltorefresh.library.PullToRefreshBase;
 import com.handmark.pulltorefresh.library.PullToRefreshScrollView;
 
@@ -32,6 +38,9 @@ import java.util.Iterator;
 import java.util.List;
 
 public class WeatherActivity extends Activity {
+    private Context mContext;
+    private WeatherService mService;
+
     private PullToRefreshScrollView mPullRefreshScrollView;
     private ScrollView mScrollView;
     private TextView tv_city,     //城市
@@ -85,12 +94,14 @@ public class WeatherActivity extends Activity {
         super.onCreate(savedInstanceState);
         requestWindowFeature(getWindow().FEATURE_NO_TITLE);
         setContentView(R.layout.activity_weather);
+        mContext = this;
         init();
+        //initService();
         getCityWeather();
     }
 
     private void getCityWeather() {
-        if(isRunning){
+        if (isRunning) {
             return;
         }
         isRunning = true;
@@ -118,7 +129,7 @@ public class WeatherActivity extends Activity {
                 if (weatherBean != null) {
                     setWeatherViews(weatherBean);
                 }
-                if(count == 3){
+                if (count == 3) {
                     mPullRefreshScrollView.onRefreshComplete();
                     isRunning = true;
                 }
@@ -126,7 +137,7 @@ public class WeatherActivity extends Activity {
 
             @Override
             public void onError(Exception e) {
-                Log.d("url",e.toString());
+                Log.d("url", e.toString());
             }
         });
 
@@ -135,13 +146,13 @@ public class WeatherActivity extends Activity {
         HttpUtil.sendHttpRequest(url2, new HttpCallbackListener() {
             @Override
             public void onFinish(String response) {
-               // Log.d("response", response);
+                // Log.d("response", response);
                 count++;
                 List<HoursWeatherBean> list = parseForcast3h(response);
                 if (list != null && list.size() >= 5) {
                     setHourViews(list);
                 }
-                if(count == 3){
+                if (count == 3) {
                     mPullRefreshScrollView.onRefreshComplete();
                     isRunning = true;
                 }
@@ -149,7 +160,7 @@ public class WeatherActivity extends Activity {
 
             @Override
             public void onError(Exception e) {
-                Log.d("url2",e.toString());
+                Log.d("url2", e.toString());
             }
         });
 
@@ -161,10 +172,10 @@ public class WeatherActivity extends Activity {
                 //Log.d("response",response);
                 count++;
                 PMBean bean = parsePM(response);
-                if(bean != null){
+                if (bean != null) {
                     setPMView(bean);
                 }
-                if(count == 3){
+                if (count == 3) {
                     mPullRefreshScrollView.onRefreshComplete();
                     isRunning = true;
                 }
@@ -172,7 +183,7 @@ public class WeatherActivity extends Activity {
 
             @Override
             public void onError(Exception e) {
-                Log.d("url3",e.toString());
+                Log.d("url3", e.toString());
             }
         });
     }
@@ -289,7 +300,7 @@ public class WeatherActivity extends Activity {
     }
 
     //解析空气质量
-    private PMBean parsePM(String result){
+    private PMBean parsePM(String result) {
         PMBean bean = null;
         try {
             JSONObject obj = new JSONObject(result);
@@ -300,7 +311,7 @@ public class WeatherActivity extends Activity {
                 JSONObject pmJson = obj.getJSONArray("result").getJSONObject(0).getJSONObject("citynow");
                 bean.setAqi(pmJson.getString("AQI"));
                 bean.setQuality(pmJson.getString("quality"));
-                Log.d("quality",bean.getQuality());
+                Log.d("quality", bean.getQuality());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -333,9 +344,9 @@ public class WeatherActivity extends Activity {
         String prefixStr = null;
         Calendar c = Calendar.getInstance();
         int time = c.get(Calendar.HOUR_OF_DAY);
-        if(time >= 6 && time < 18){
+        if (time >= 6 && time < 18) {
             prefixStr = "d";
-        }else{
+        } else {
             prefixStr = "n";
         }
         iv_now_weather.setImageResource(getResources().getIdentifier(prefixStr + bean.getWeather_id(), "drawable", "com.example.administrator.weather"));
@@ -359,11 +370,11 @@ public class WeatherActivity extends Activity {
 
     //填充未来5小时数据
     private void setHourViews(List<HoursWeatherBean> list) {
-        setFutureHourViews(tv_next_three,iv_next_three,tv_next_three_temp,list.get(0));
-        setFutureHourViews(tv_next_six,iv_next_six,tv_next_six_temp,list.get(1));
-        setFutureHourViews(tv_next_nine,iv_next_nine,tv_next_nine_temp,list.get(2));
-        setFutureHourViews(tv_next_twelve,iv_next_twelve,tv_next_twelve_temp,list.get(3));
-        setFutureHourViews(tv_next_fifteen,iv_next_fifteen,tv_next_fifteen_temp,list.get(4));
+        setFutureHourViews(tv_next_three, iv_next_three, tv_next_three_temp, list.get(0));
+        setFutureHourViews(tv_next_six, iv_next_six, tv_next_six_temp, list.get(1));
+        setFutureHourViews(tv_next_nine, iv_next_nine, tv_next_nine_temp, list.get(2));
+        setFutureHourViews(tv_next_twelve, iv_next_twelve, tv_next_twelve_temp, list.get(3));
+        setFutureHourViews(tv_next_fifteen, iv_next_fifteen, tv_next_fifteen_temp, list.get(4));
     }
 
     //填充未来间隔3小时数据
@@ -371,22 +382,42 @@ public class WeatherActivity extends Activity {
         //区分白天和夜晚图标
         String prefixStr = null;
         int time = Integer.valueOf(bean.getTime());
-        if(time >= 6 && time < 18){
+        if (time >= 6 && time < 18) {
             prefixStr = "d";
-        }else{
+        } else {
             prefixStr = "n";
         }
         tv_hour.setText(bean.getTime() + "时");
         iv_weather.setImageResource(getResources().getIdentifier(
-                prefixStr + bean.getWeather_id(),"drawable", "com.example.administrator.weather"));
+                prefixStr + bean.getWeather_id(), "drawable", "com.example.administrator.weather"));
         tv_temp.setText(bean.getTemp() + "°");
     }
 
     //填充PM数据
-    private void setPMView(PMBean bean){
+    private void setPMView(PMBean bean) {
         tv_aqi.setText(bean.getAqi());
         tv_quality.setText(bean.getQuality());
     }
+
+    //启动服务
+    private void initService() {
+        Intent intent = new Intent(mContext, WeatherService.class);
+        startService(intent);
+        bindService(intent, conn, Context.BIND_AUTO_CREATE);
+    }
+
+    ServiceConnection conn = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            mService = ((WeatherService.WeatherServiceBinder) service).getService();
+            mService.test();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+
+        }
+    };
 
     //初始化控件
     private void init() {
@@ -466,4 +497,9 @@ public class WeatherActivity extends Activity {
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        unbindService(conn);
+        super.onDestroy();
+    }
 }
