@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">Weather</string>
+    <string name="filler_text">iller text is used by designers to shift the focus from content to presentation. It has been proven that, when content is provided in a design, viewers focus on reading the content, not on assessing the overall design. In a mockup of a design, filler text is used to give the look of content, while not distracting from the presentation.</string>
+    <string name="forecast">预报</string>
+    <string name="pm">PM2.5</string>
+    <string name="default_text">_ _</string>
+    <string name="today">今天</string>
+    <string name="tomorrow">明天</string>
+    <string name="third">后天</string>
+    <string name="forth">后天</string>
+    <string name="felt_air_temp">体感温度</string>
+    <string name="humidity">湿度</string>
+    <string name="wind">风向风力</string>
+    <string name="uv_index">紫外线指数</string>
+    <string name="dressing_index">穿衣指数</string>
+    <string name="information">详细信息</string>
+</resources>

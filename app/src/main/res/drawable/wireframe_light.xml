@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android" >
+    <solid android:color="#ffffff" />
+    <!-- 描边 -->
+    <stroke
+        android:width="1px"
+        android:color="@color/light_gray" /> <!-- 定义描边的宽度和描边的颜色值 -->
+
+    <!-- 间隔 -->
+    <padding
+        android:bottom="8dp"
+        android:left="8dp"
+        android:right="8dp"
+        android:top="8dp" /> <!-- 设置各个方向的间隔 -->
+
+</shape>
