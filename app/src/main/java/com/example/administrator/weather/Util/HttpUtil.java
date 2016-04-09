@@ -1,5 +1,6 @@
 package com.example.administrator.weather.Util;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -15,14 +16,16 @@ public class HttpUtil {
             @Override
             public void run() {
                 HttpURLConnection connection = null;
+                InputStream in = null;
+                BufferedReader reader = null;
                 try {
                     URL url = new URL(address);
                     connection = (HttpURLConnection) url.openConnection();
                     connection.setRequestMethod("GET");
                     connection.setConnectTimeout(8000);
                     connection.setReadTimeout(8000);
-                    InputStream in = connection.getInputStream();
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+                    in = connection.getInputStream();
+                    reader = new BufferedReader(new InputStreamReader(in));
                     StringBuilder response = new StringBuilder();
                     String line;
                     while ((line = reader.readLine()) != null) {
@@ -36,6 +39,12 @@ public class HttpUtil {
                         listener.onError(e);
                     }
                 } finally {
+                    try {
+                        reader.close();
+                        in.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                     if (connection != null) {
                         connection.disconnect();
                     }

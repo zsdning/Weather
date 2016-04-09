@@ -9,12 +9,15 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.example.administrator.weather.Bean.FutureWeatherBean;
+import com.example.administrator.weather.Bean.HoursWeatherBean;
+import com.example.administrator.weather.Bean.PMBean;
 import com.example.administrator.weather.Bean.WeatherBean;
 import com.example.administrator.weather.Util.HttpCallbackListener;
 import com.example.administrator.weather.Util.HttpUtil;
 import com.handmark.pulltorefresh.library.PullToRefreshBase;
 import com.handmark.pulltorefresh.library.PullToRefreshScrollView;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -23,6 +26,7 @@ import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -73,6 +77,9 @@ public class WeatherActivity extends Activity {
             iv_thirdday_weather,  //第三天
             iv_fourthday_weather; //第四天
 
+    private boolean isRunning = false;
+    private int count = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -83,6 +90,12 @@ public class WeatherActivity extends Activity {
     }
 
     private void getCityWeather() {
+        if(isRunning){
+            return;
+        }
+        isRunning = true;
+        count = 0;
+
         //此处以返回json格式数据示例,所以format=2,以根据城市名称为例,cityName传入中文
         String cityName = "上海";
         try {
@@ -92,37 +105,79 @@ public class WeatherActivity extends Activity {
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
+
+        //实时和未来3天天气数据
         String url =
                 "http://v.juhe.cn/weather/index?cityname=" + cityName + "&key=e72df95d38ce64d6395055944b9495b2";
         HttpUtil.sendHttpRequest(url, new HttpCallbackListener() {
             @Override
             public void onFinish(String response) {
+                //Log.d("response", response);
+                count++;
                 WeatherBean weatherBean = parseWeather(response);
                 if (weatherBean != null) {
-                    setViews(weatherBean);
+                    setWeatherViews(weatherBean);
+                }
+                if(count == 3){
+                    mPullRefreshScrollView.onRefreshComplete();
+                    isRunning = true;
                 }
             }
 
             @Override
             public void onError(Exception e) {
-
+                Log.d("url",e.toString());
             }
         });
 
+        //未来间隔3小时数据
         String url2 = "http://v.juhe.cn/weather/forecast3h.php?cityname=" + cityName + "&key=e72df95d38ce64d6395055944b9495b2";
         HttpUtil.sendHttpRequest(url2, new HttpCallbackListener() {
             @Override
             public void onFinish(String response) {
-                Log.d("response",response);
+               // Log.d("response", response);
+                count++;
+                List<HoursWeatherBean> list = parseForcast3h(response);
+                if (list != null && list.size() >= 5) {
+                    setHourViews(list);
+                }
+                if(count == 3){
+                    mPullRefreshScrollView.onRefreshComplete();
+                    isRunning = true;
+                }
             }
 
             @Override
             public void onError(Exception e) {
+                Log.d("url2",e.toString());
+            }
+        });
 
+        //空气质量
+        String url3 = "http://web.juhe.cn:8080/environment/air/cityair?city=" + cityName + "&key=613c563685da986f1eb4a14c2a27d764";
+        HttpUtil.sendHttpRequest(url3, new HttpCallbackListener() {
+            @Override
+            public void onFinish(String response) {
+                //Log.d("response",response);
+                count++;
+                PMBean bean = parsePM(response);
+                if(bean != null){
+                    setPMView(bean);
+                }
+                if(count == 3){
+                    mPullRefreshScrollView.onRefreshComplete();
+                    isRunning = true;
+                }
+            }
+
+            @Override
+            public void onError(Exception e) {
+                Log.d("url3",e.toString());
             }
         });
     }
 
+    //解析城市天气数据
     private WeatherBean parseWeather(String result) {
         WeatherBean bean = null;
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
@@ -194,11 +249,67 @@ public class WeatherActivity extends Activity {
         return bean;
     }
 
-    private void parseForcast3h(String result) {
-
+    //解析未来间隔3小时数据
+    private List<HoursWeatherBean> parseForcast3h(String result) {
+        List<HoursWeatherBean> list = null;
+        if (result != null) {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddhhmmss");
+            Date date = new Date(System.currentTimeMillis());
+            try {
+                JSONObject obj = new JSONObject(result);
+                int code = obj.getInt("resultcode");
+                int error_code = obj.getInt("error_code");
+                if (error_code == 0 && code == 200) {
+                    list = new ArrayList<HoursWeatherBean>();
+                    JSONArray resultArray = obj.getJSONArray("result");
+                    for (int i = 0; i < resultArray.length(); i++) {
+                        JSONObject hourJson = resultArray.getJSONObject(i);
+                        Date hDate = sdf.parse(hourJson.getString("sfdate"));
+                        if (!hDate.after(date)) {
+                            continue;
+                        }
+                        HoursWeatherBean bean = new HoursWeatherBean();
+                        bean.setWeather_id(hourJson.getString("weatherid"));
+                        bean.setTemp(hourJson.getString("temp1"));
+                        //Log.d("temp1", bean.getTemp());
+                        Calendar c = Calendar.getInstance();
+                        c.setTime(hDate);
+                        bean.setTime(c.get(Calendar.HOUR_OF_DAY) + "");
+                        list.add(bean);
+                        if (list.size() == 5) {
+                            break;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return list;
     }
 
-    private void setViews(WeatherBean bean) {
+    //解析空气质量
+    private PMBean parsePM(String result){
+        PMBean bean = null;
+        try {
+            JSONObject obj = new JSONObject(result);
+            int code = obj.getInt("resultcode");
+            int error_code = obj.getInt("error_code");
+            if (error_code == 0 && code == 200) {
+                bean = new PMBean();
+                JSONObject pmJson = obj.getJSONArray("result").getJSONObject(0).getJSONObject("citynow");
+                bean.setAqi(pmJson.getString("AQI"));
+                bean.setQuality(pmJson.getString("quality"));
+                Log.d("quality",bean.getQuality());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return bean;
+    }
+
+    //填充实时天气
+    private void setWeatherViews(WeatherBean bean) {
         tv_city.setText(bean.getCity());
         tv_release.setText(bean.getRelease() + "发布");
         tv_now_weather.setText(bean.getWether_str());
@@ -207,8 +318,7 @@ public class WeatherActivity extends Activity {
         String temp_str_b = tempArr[0].substring(0, tempArr[0].indexOf("℃"));
         //温度：14℃~23℃   ↑↓ °
         tv_today_temp.setText("↑" + temp_str_a + "° ↓" + temp_str_b + "°");
-        tv_now_temp.setText(bean.getNow_temp());
-        iv_now_weather.setImageResource(getResources().getIdentifier("d" + bean.getWeather_id(), "drawable", "com.example.administrator.weather"));
+        tv_now_temp.setText(bean.getNow_temp() + "°");
 
         tv_today_temp_a.setText(temp_str_a + "");
         tv_today_temp_b.setText(temp_str_b + "");
@@ -219,8 +329,24 @@ public class WeatherActivity extends Activity {
             setFutureViews(tv_fourthday, iv_fourthday_weather, tv_fourthday_temp_a, tv_fourthday_temp_b, futureList.get(2));
         }
 
+        //区分白天和夜晚图标
+        String prefixStr = null;
+        Calendar c = Calendar.getInstance();
+        int time = c.get(Calendar.HOUR_OF_DAY);
+        if(time >= 6 && time < 18){
+            prefixStr = "d";
+        }else{
+            prefixStr = "n";
+        }
+        iv_now_weather.setImageResource(getResources().getIdentifier(prefixStr + bean.getWeather_id(), "drawable", "com.example.administrator.weather"));
+
+        tv_humidity.setText(bean.getHumidity());
+        tv_dressing_index.setText(bean.getDressing_index());
+        tv_uv_index.setText(bean.getUv_index());
+        tv_wind.setText(bean.getWind());
     }
 
+    //填充未来天气数据
     private void setFutureViews(TextView tv_week, ImageView iv_weather, TextView tv_temp_a, TextView tv_temp_b, FutureWeatherBean futureWeatherBean) {
         tv_week.setText(futureWeatherBean.getWeek());
         iv_weather.setImageResource(getResources().getIdentifier("d" + futureWeatherBean.getWeather_id(), "drawable", "com.example.administrator.weather"));
@@ -231,6 +357,38 @@ public class WeatherActivity extends Activity {
         tv_temp_b.setText(temp_str_b);
     }
 
+    //填充未来5小时数据
+    private void setHourViews(List<HoursWeatherBean> list) {
+        setFutureHourViews(tv_next_three,iv_next_three,tv_next_three_temp,list.get(0));
+        setFutureHourViews(tv_next_six,iv_next_six,tv_next_six_temp,list.get(1));
+        setFutureHourViews(tv_next_nine,iv_next_nine,tv_next_nine_temp,list.get(2));
+        setFutureHourViews(tv_next_twelve,iv_next_twelve,tv_next_twelve_temp,list.get(3));
+        setFutureHourViews(tv_next_fifteen,iv_next_fifteen,tv_next_fifteen_temp,list.get(4));
+    }
+
+    //填充未来间隔3小时数据
+    private void setFutureHourViews(TextView tv_hour, ImageView iv_weather, TextView tv_temp, HoursWeatherBean bean) {
+        //区分白天和夜晚图标
+        String prefixStr = null;
+        int time = Integer.valueOf(bean.getTime());
+        if(time >= 6 && time < 18){
+            prefixStr = "d";
+        }else{
+            prefixStr = "n";
+        }
+        tv_hour.setText(bean.getTime() + "时");
+        iv_weather.setImageResource(getResources().getIdentifier(
+                prefixStr + bean.getWeather_id(),"drawable", "com.example.administrator.weather"));
+        tv_temp.setText(bean.getTemp() + "°");
+    }
+
+    //填充PM数据
+    private void setPMView(PMBean bean){
+        tv_aqi.setText(bean.getAqi());
+        tv_quality.setText(bean.getQuality());
+    }
+
+    //初始化控件
     private void init() {
         //TextView
         tv_city = (TextView) findViewById(R.id.tv_city);
@@ -294,6 +452,7 @@ public class WeatherActivity extends Activity {
         protected String[] doInBackground(Void... params) {
             try {
                 Thread.sleep(4000);
+                getCityWeather();
             } catch (Exception e) {
                 e.printStackTrace();
             }

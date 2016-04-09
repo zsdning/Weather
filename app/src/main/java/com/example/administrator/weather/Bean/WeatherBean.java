@@ -9,11 +9,9 @@ public class WeatherBean {
     private String city;
     private String release;
     private String weather_id;
-    private String wether_str;
+    private String weather_str;
     private String temp;
     private String now_temp;
-    private String aqi;
-    private String quality;
     private String felt_temp;
     private String humidity;
     private String wind;
@@ -46,11 +44,11 @@ public class WeatherBean {
     }
 
     public String getWether_str() {
-        return wether_str;
+        return weather_str;
     }
 
     public void setWether_str(String wether_str) {
-        this.wether_str = wether_str;
+        this.weather_str = wether_str;
     }
 
     public String getTemp() {
@@ -67,22 +65,6 @@ public class WeatherBean {
 
     public void setNow_temp(String now_temp) {
         this.now_temp = now_temp;
-    }
-
-    public String getAqi() {
-        return aqi;
-    }
-
-    public void setAqi(String aqi) {
-        this.aqi = aqi;
-    }
-
-    public String getQuality() {
-        return quality;
-    }
-
-    public void setQuality(String quality) {
-        this.quality = quality;
     }
 
     public String getFelt_temp() {
