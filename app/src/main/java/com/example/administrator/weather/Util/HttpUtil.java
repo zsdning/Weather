@@ -40,6 +40,7 @@ public class HttpUtil {
                         listener.onError(e);
                     }
                 } finally {
+                    //释放资源
                     if (reader != null) {
                         try {
                             reader.close();
