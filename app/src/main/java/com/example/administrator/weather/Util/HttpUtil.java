@@ -1,4 +1,5 @@
 package com.example.administrator.weather.Util;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,15 +40,19 @@ public class HttpUtil {
                         listener.onError(e);
                     }
                 } finally {
-                    try {
-                        if(reader != null){
+                    if (reader != null) {
+                        try {
                             reader.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
-                        if(in != null){
+                    }
+                    if (in != null) {
+                        try {
                             in.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
-                    } catch (IOException e) {
-                        e.printStackTrace();
                     }
                     if (connection != null) {
                         connection.disconnect();
