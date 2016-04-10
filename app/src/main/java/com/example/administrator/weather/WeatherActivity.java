@@ -483,6 +483,7 @@ public class WeatherActivity extends Activity {
         });
         mScrollView = mPullRefreshScrollView.getRefreshableView();
 
+        //点击出现城市选择界面
         rl_city = (RelativeLayout) findViewById(R.id.rl_city);
         rl_city.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -491,7 +492,6 @@ public class WeatherActivity extends Activity {
             }
         });
     }
-
 
     //处理来自CityActivity的返回值
     @Override

@@ -40,8 +40,12 @@ public class HttpUtil {
                     }
                 } finally {
                     try {
-                        reader.close();
-                        in.close();
+                        if(reader != null){
+                            reader.close();
+                        }
+                        if(in != null){
+                            in.close();
+                        }
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
