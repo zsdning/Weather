@@ -88,6 +88,10 @@ public class WeatherActivity extends Activity {
 
     private String cityName = "上海";
 
+    private WeatherBean weatherBean = null;
+    private List<HoursWeatherBean> list = null;
+    private PMBean bean = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -118,14 +122,20 @@ public class WeatherActivity extends Activity {
 
         //实时和未来3天天气数据
         String url =
-                "http://v.juhe.cn/weather/index?cityname=" + cityName + "&key=**";
+                "http://v.juhe.cn/weather/index?cityname=" + cityName + "&key=e72df95d38ce64d6395055944b9495b2";
         HttpUtil.sendHttpRequest(url, new HttpCallbackListener() {
             @Override
             public void onFinish(String response) {
                 //Log.d("response", response);
-                WeatherBean weatherBean = parseWeather(response);
+                weatherBean = parseWeather(response);
                 if (weatherBean != null) {
-                    setWeatherViews(weatherBean);
+                    //涉及到UI，需要重新回到主线程
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            setWeatherViews(weatherBean);
+                        }
+                    });
                 }
             }
 
@@ -136,14 +146,20 @@ public class WeatherActivity extends Activity {
         });
 
         //未来间隔3小时数据
-        String url2 = "http://v.juhe.cn/weather/forecast3h.php?cityname=" + cityName + "&key=**";
+        String url2 = "http://v.juhe.cn/weather/forecast3h.php?cityname=" + cityName + "&key=e72df95d38ce64d6395055944b9495b2";
         HttpUtil.sendHttpRequest(url2, new HttpCallbackListener() {
             @Override
             public void onFinish(String response) {
                 // Log.d("response", response);
-                List<HoursWeatherBean> list = parseForcast3h(response);
+                list = parseForcast3h(response);
                 if (list != null && list.size() >= 5) {
-                    setHourViews(list);
+                    //涉及到UI，需要重新回到主线程
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            setHourViews(list);
+                        }
+                    });
                 }
             }
 
@@ -154,16 +170,21 @@ public class WeatherActivity extends Activity {
         });
 
         //空气质量
-        String url3 = "http://web.juhe.cn:8080/environment/air/cityair?city=" + cityName + "&key=**";
+        String url3 = "http://web.juhe.cn:8080/environment/air/cityair?city=" + cityName + "&key=613c563685da986f1eb4a14c2a27d764";
         HttpUtil.sendHttpRequest(url3, new HttpCallbackListener() {
             @Override
             public void onFinish(String response) {
                 //Log.d("response",response);
-                PMBean bean = parsePM(response);
+                bean = parsePM(response);
                 if (bean != null) {
-                    setPMView(bean);
+                    //涉及到UI，需要重新回到主线程
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            setPMView(bean);
+                        }
+                    });
                 }
-
             }
 
             @Override

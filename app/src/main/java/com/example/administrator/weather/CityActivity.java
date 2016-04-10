@@ -45,15 +45,15 @@ public class CityActivity extends Activity {
     }
 
     private void getCities() {
-        String url4 = "http://v.juhe.cn/weather/citys?key=**";
+        String url4 = "http://v.juhe.cn/weather/citys?key=e72df95d38ce64d6395055944b9495b2";
         HttpUtil.sendHttpRequest(url4, new HttpCallbackListener() {
             @Override
             public void onFinish(final String response) {
                 Log.d("response", response);
+                //涉及到UI，需要重新回到主线程
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        //涉及到UI，需要重新回到主线程
                         parseCities(response);
                     }
                 });
@@ -86,7 +86,7 @@ public class CityActivity extends Activity {
                     list.addAll(citySet);
                     //Log.d("list", list.toString());
                     CityListAdapter adapter = new CityListAdapter(CityActivity.this, list);
-                   //下面是一个测试
+                    //下面是一个测试
                     // ArrayAdapter<String> adapter = new ArrayAdapter<String>(CityActivity.this,android.R.layout.simple_list_item_1,list);
                     lv_city.setAdapter(adapter);
                     lv_city.setOnItemClickListener(new AdapterView.OnItemClickListener() {
