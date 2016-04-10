@@ -248,6 +248,7 @@
                     <ImageView android:id="@+id/today_weather"
                         style="@style/ViewStyle"
                         android:layout_weight="2"
+                        android:paddingLeft="12dp"
                         android:src="@drawable/d01"
                         />
                     <TextView

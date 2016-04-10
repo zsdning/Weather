@@ -1,15 +1,14 @@
 package com.example.administrator.weather;
 
 import android.app.Activity;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.util.Log;
+import android.view.View;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
@@ -41,6 +40,7 @@ public class WeatherActivity extends Activity {
     private Context mContext;
     private WeatherService mService;
 
+    private RelativeLayout rl_city;
     private PullToRefreshScrollView mPullRefreshScrollView;
     private ScrollView mScrollView;
     private TextView tv_city,     //城市
@@ -86,8 +86,7 @@ public class WeatherActivity extends Activity {
             iv_thirdday_weather,  //第三天
             iv_fourthday_weather; //第四天
 
-    private boolean isRunning = false;
-    private int count = 0;
+    private String cityName = "上海";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,15 +99,15 @@ public class WeatherActivity extends Activity {
         getCityWeather();
     }
 
-    private void getCityWeather() {
-        if (isRunning) {
-            return;
-        }
-        isRunning = true;
-        count = 0;
+    //城市列表选择后刷新天气
+    private void getCityWeather(String city) {
+        this.cityName = city;
+        getCityWeather();
+    }
 
+    //查询天气
+    private void getCityWeather() {
         //此处以返回json格式数据示例,所以format=2,以根据城市名称为例,cityName传入中文
-        String cityName = "上海";
         try {
             //手机自带浏览器不能自动将中文参数编码，需要进行转码，
             // 否则URL中城市名字为汉字在浏览器中访问数据返回正常，手机上返回查询不到该城市
@@ -119,19 +118,14 @@ public class WeatherActivity extends Activity {
 
         //实时和未来3天天气数据
         String url =
-                "http://v.juhe.cn/weather/index?cityname=" + cityName + "&key=e72df95d38ce64d6395055944b9495b2";
+                "http://v.juhe.cn/weather/index?cityname=" + cityName + "&key=**";
         HttpUtil.sendHttpRequest(url, new HttpCallbackListener() {
             @Override
             public void onFinish(String response) {
                 //Log.d("response", response);
-                count++;
                 WeatherBean weatherBean = parseWeather(response);
                 if (weatherBean != null) {
                     setWeatherViews(weatherBean);
-                }
-                if (count == 3) {
-                    mPullRefreshScrollView.onRefreshComplete();
-                    isRunning = true;
                 }
             }
 
@@ -142,19 +136,14 @@ public class WeatherActivity extends Activity {
         });
 
         //未来间隔3小时数据
-        String url2 = "http://v.juhe.cn/weather/forecast3h.php?cityname=" + cityName + "&key=e72df95d38ce64d6395055944b9495b2";
+        String url2 = "http://v.juhe.cn/weather/forecast3h.php?cityname=" + cityName + "&key=**";
         HttpUtil.sendHttpRequest(url2, new HttpCallbackListener() {
             @Override
             public void onFinish(String response) {
                 // Log.d("response", response);
-                count++;
                 List<HoursWeatherBean> list = parseForcast3h(response);
                 if (list != null && list.size() >= 5) {
                     setHourViews(list);
-                }
-                if (count == 3) {
-                    mPullRefreshScrollView.onRefreshComplete();
-                    isRunning = true;
                 }
             }
 
@@ -165,20 +154,16 @@ public class WeatherActivity extends Activity {
         });
 
         //空气质量
-        String url3 = "http://web.juhe.cn:8080/environment/air/cityair?city=" + cityName + "&key=613c563685da986f1eb4a14c2a27d764";
+        String url3 = "http://web.juhe.cn:8080/environment/air/cityair?city=" + cityName + "&key=**";
         HttpUtil.sendHttpRequest(url3, new HttpCallbackListener() {
             @Override
             public void onFinish(String response) {
                 //Log.d("response",response);
-                count++;
                 PMBean bean = parsePM(response);
                 if (bean != null) {
                     setPMView(bean);
                 }
-                if (count == 3) {
-                    mPullRefreshScrollView.onRefreshComplete();
-                    isRunning = true;
-                }
+
             }
 
             @Override
@@ -400,7 +385,7 @@ public class WeatherActivity extends Activity {
     }
 
     //启动服务
-    private void initService() {
+    /*private void initService() {
         Intent intent = new Intent(mContext, WeatherService.class);
         startService(intent);
         bindService(intent, conn, Context.BIND_AUTO_CREATE);
@@ -417,7 +402,7 @@ public class WeatherActivity extends Activity {
         public void onServiceDisconnected(ComponentName name) {
 
         }
-    };
+    };*/
 
     //初始化控件
     private void init() {
@@ -476,6 +461,24 @@ public class WeatherActivity extends Activity {
             }
         });
         mScrollView = mPullRefreshScrollView.getRefreshableView();
+
+        rl_city = (RelativeLayout) findViewById(R.id.rl_city);
+        rl_city.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivityForResult(new Intent(mContext, CityActivity.class), 1);
+            }
+        });
+    }
+
+
+    //处理来自CityActivity的返回值
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == 1 && resultCode == 1) {
+            String city = data.getStringExtra("city");
+            getCityWeather(city);
+        }
     }
 
     private class GetDataTask extends AsyncTask<Void, Void, String[]> {
@@ -495,11 +498,5 @@ public class WeatherActivity extends Activity {
             mPullRefreshScrollView.onRefreshComplete();
             super.onPostExecute(strings);
         }
-    }
-
-    @Override
-    protected void onDestroy() {
-        unbindService(conn);
-        super.onDestroy();
     }
 }
