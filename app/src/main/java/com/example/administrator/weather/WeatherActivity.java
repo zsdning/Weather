@@ -122,7 +122,7 @@ public class WeatherActivity extends Activity {
 
         //实时和未来3天天气数据
         String url =
-                "http://v.juhe.cn/weather/index?cityname=" + cityName + "&key=e72df95d38ce64d6395055944b9495b2";
+                "http://v.juhe.cn/weather/index?cityname=" + cityName + "&key=e72df95d38ce64d6395055944b9****";
         HttpUtil.sendHttpRequest(url, new HttpCallbackListener() {
             @Override
             public void onFinish(String response) {
@@ -146,7 +146,7 @@ public class WeatherActivity extends Activity {
         });
 
         //未来间隔3小时数据
-        String url2 = "http://v.juhe.cn/weather/forecast3h.php?cityname=" + cityName + "&key=e72df95d38ce64d6395055944b9495b2";
+        String url2 = "http://v.juhe.cn/weather/forecast3h.php?cityname=" + cityName + "&key=e72df95d38ce64d6395055944b9****";
         HttpUtil.sendHttpRequest(url2, new HttpCallbackListener() {
             @Override
             public void onFinish(String response) {
@@ -170,7 +170,7 @@ public class WeatherActivity extends Activity {
         });
 
         //空气质量
-        String url3 = "http://web.juhe.cn:8080/environment/air/cityair?city=" + cityName + "&key=613c563685da986f1eb4a14c2a27d764";
+        String url3 = "http://web.juhe.cn:8080/environment/air/cityair?city=" + cityName + "&key=613c563685da986f1eb4a14c2a27****";
         HttpUtil.sendHttpRequest(url3, new HttpCallbackListener() {
             @Override
             public void onFinish(String response) {
