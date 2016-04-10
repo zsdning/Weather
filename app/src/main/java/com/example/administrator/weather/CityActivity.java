@@ -45,7 +45,7 @@ public class CityActivity extends Activity {
     }
 
     private void getCities() {
-        String url4 = "http://v.juhe.cn/weather/citys?key=e72df95d38ce64d6395055944b9495b2";
+        String url4 = "http://v.juhe.cn/weather/citys?key=e72df95d38ce64d6395055944b94****";
         HttpUtil.sendHttpRequest(url4, new HttpCallbackListener() {
             @Override
             public void onFinish(final String response) {
