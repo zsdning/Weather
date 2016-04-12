@@ -15,4 +15,5 @@
     <string name="dressing_index">穿衣指数</string>
     <string name="information">详细信息</string>
     <string name="title_city">城市选择</string>
+    <string name="lose_network">网络不可用</string>
 </resources>

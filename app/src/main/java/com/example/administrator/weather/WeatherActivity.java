@@ -3,6 +3,8 @@ package com.example.administrator.weather;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -11,6 +13,7 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.administrator.weather.Bean.FutureWeatherBean;
 import com.example.administrator.weather.Bean.HoursWeatherBean;
@@ -35,6 +38,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class WeatherActivity extends Activity {
     private Context mContext;
@@ -97,6 +102,7 @@ public class WeatherActivity extends Activity {
         super.onCreate(savedInstanceState);
         requestWindowFeature(getWindow().FEATURE_NO_TITLE);
         setContentView(R.layout.activity_weather);
+        checkNetwork();
         mContext = this;
         init();
         //initService();
@@ -122,11 +128,11 @@ public class WeatherActivity extends Activity {
 
         //实时和未来3天天气数据
         String url =
-                "http://v.juhe.cn/weather/index?cityname=" + cityName + "&key=e72df95d38ce64d6395055944b9****";
+                "http://v.juhe.cn/weather/index?cityname=" + cityName + "&key=e72df95d38ce64d6395055944b9495b2";
         HttpUtil.sendHttpRequest(url, new HttpCallbackListener() {
             @Override
             public void onFinish(String response) {
-                //Log.d("response", response);
+                Log.d("response", response);
                 weatherBean = parseWeather(response);
                 if (weatherBean != null) {
                     //涉及到UI，需要重新回到主线程
@@ -146,7 +152,7 @@ public class WeatherActivity extends Activity {
         });
 
         //未来间隔3小时数据
-        String url2 = "http://v.juhe.cn/weather/forecast3h.php?cityname=" + cityName + "&key=e72df95d38ce64d6395055944b9****";
+        String url2 = "http://v.juhe.cn/weather/forecast3h.php?cityname=" + cityName + "&key=e72df95d38ce64d6395055944b9495b2";
         HttpUtil.sendHttpRequest(url2, new HttpCallbackListener() {
             @Override
             public void onFinish(String response) {
@@ -170,7 +176,7 @@ public class WeatherActivity extends Activity {
         });
 
         //空气质量
-        String url3 = "http://web.juhe.cn:8080/environment/air/cityair?city=" + cityName + "&key=613c563685da986f1eb4a14c2a27****";
+        String url3 = "http://web.juhe.cn:8080/environment/air/cityair?city=" + cityName + "&key=613c563685da986f1eb4a14c2a27d764";
         HttpUtil.sendHttpRequest(url3, new HttpCallbackListener() {
             @Override
             public void onFinish(String response) {
@@ -234,11 +240,18 @@ public class WeatherActivity extends Activity {
                     String key = null;
                     String value = null;
                     List<FutureWeatherBean> futureList = new ArrayList<FutureWeatherBean>();
+                    Set<String> keySet = new TreeSet<String>();
+                    //JSON的迭代遍历属于无序遍历，需要放到有序的集合中
                     while (iterator.hasNext()) {
                         key = (String) iterator.next();
-                        value = future.getString(key);
-                        JSONObject futureJson = new JSONObject(value);
-                        //   Log.d("futureJson",futureJson.getString("temperature"));
+                        Log.d("key", key);
+                        keySet.add(key);
+                    }
+                    for (String val : keySet) {
+                        /*value = future.getString(key2);
+                        JSONObject futureJson = new JSONObject(value);*/
+                         JSONObject futureJson = future.getJSONObject(val);
+                        // Log.d("futureJson",futureJson.getString("temperature"));
                         FutureWeatherBean futureBean = new FutureWeatherBean();
                         try {
                             Date datef = sdf.parse(futureJson.getString("date"));
@@ -424,6 +437,24 @@ public class WeatherActivity extends Activity {
 
         }
     };*/
+
+    private void checkNetwork() {
+        ConnectivityManager manger = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo info = manger.getActiveNetworkInfo();
+        if (info != null && info.isConnected())//判断是否有网络连接
+        {
+            Toast.makeText(WeatherActivity.this, "联网", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(WeatherActivity.this, "联网失败", Toast.LENGTH_SHORT).show();
+            if (android.os.Build.VERSION.SDK_INT > 10) {
+                //3.0以上打开设置界面，也可以直接用ACTION_WIRELESS_SETTINGS打开到wifi界面
+                startActivity(new Intent(android.provider.Settings.ACTION_SETTINGS));
+            } else {
+                startActivity(new Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS));
+            }
+
+        }
+    }
 
     //初始化控件
     private void init() {
