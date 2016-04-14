@@ -1,6 +1,5 @@
-package com.example.administrator.weather;
+package com.example.administrator.weather.Activity;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
@@ -19,6 +18,7 @@ import com.example.administrator.weather.Bean.FutureWeatherBean;
 import com.example.administrator.weather.Bean.HoursWeatherBean;
 import com.example.administrator.weather.Bean.PMBean;
 import com.example.administrator.weather.Bean.WeatherBean;
+import com.example.administrator.weather.R;
 import com.example.administrator.weather.Util.HttpCallbackListener;
 import com.example.administrator.weather.Util.HttpUtil;
 import com.example.administrator.weather.service.WeatherService;
@@ -30,6 +30,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -41,7 +42,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
-public class WeatherActivity extends Activity {
+public class WeatherActivity extends BaseActivity {
     private Context mContext;
     private WeatherService mService;
 
@@ -67,6 +68,7 @@ public class WeatherActivity extends Activity {
             tv_next_fifteen_temp, //15小时温度
             tv_today_temp_a,      //今天温度a
             tv_today_temp_b,      //今天温度b
+            tv_today,             //今天
             tv_tomorrow,          //明天
             tv_tomorrow_temp_a,   //明天温度a
             tv_tomorrow_temp_b,   //明天温度b
@@ -100,8 +102,8 @@ public class WeatherActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        requestWindowFeature(getWindow().FEATURE_NO_TITLE);
         setContentView(R.layout.activity_weather);
+        //检查网络状态
         checkNetwork();
         mContext = this;
         init();
@@ -354,6 +356,7 @@ public class WeatherActivity extends Activity {
         tv_today_temp_b.setText(temp_str_b + "");
         List<FutureWeatherBean> futureList = bean.getFutureWeatherBeanList();
         if (futureList.size() == 3) {
+            tv_today.setText(R.string.today);
             setFutureViews(tv_tomorrow, iv_tomorrow_weather, tv_tomorrow_temp_a, tv_tomorrow_temp_b, futureList.get(0));
             setFutureViews(tv_thirdday, iv_thirdday_weather, tv_thirdday_temp_a, tv_thirdday_temp_b, futureList.get(1));
             setFutureViews(tv_fourthday, iv_fourthday_weather, tv_fourthday_temp_a, tv_fourthday_temp_b, futureList.get(2));
@@ -438,21 +441,24 @@ public class WeatherActivity extends Activity {
         }
     };*/
 
+    //检查网络状态
     private void checkNetwork() {
         ConnectivityManager manger = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo info = manger.getActiveNetworkInfo();
         if (info != null && info.isConnected())//判断是否有网络连接
         {
-            Toast.makeText(WeatherActivity.this, "联网", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(WeatherActivity.this, "联网", Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(WeatherActivity.this, "联网失败", Toast.LENGTH_SHORT).show();
-            if (android.os.Build.VERSION.SDK_INT > 10) {
+            Intent intent = new Intent(WeatherActivity.this,NetworkActivity.class);
+            startActivity(intent);
+            //打开网络设置界面
+            /*if (android.os.Build.VERSION.SDK_INT > 10) {
                 //3.0以上打开设置界面，也可以直接用ACTION_WIRELESS_SETTINGS打开到wifi界面
                 startActivity(new Intent(android.provider.Settings.ACTION_SETTINGS));
             } else {
                 startActivity(new Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS));
-            }
-
+            }*/
         }
     }
 
@@ -476,6 +482,7 @@ public class WeatherActivity extends Activity {
         tv_next_nine_temp = (TextView) findViewById(R.id.temp_next_nine);
         tv_next_twelve_temp = (TextView) findViewById(R.id.temp_next_twelve);
         tv_next_fifteen_temp = (TextView) findViewById(R.id.temp_next_fifteen);
+        tv_today = (TextView)findViewById(R.id.today);
         tv_today_temp_a = (TextView) findViewById(R.id.today_temp_a);
         tv_today_temp_b = (TextView) findViewById(R.id.today_temp_b);
         tv_tomorrow = (TextView) findViewById(R.id.tomorrow);
@@ -537,7 +544,9 @@ public class WeatherActivity extends Activity {
         @Override
         protected String[] doInBackground(Void... params) {
             try {
-                Thread.sleep(4000);
+               // Thread.sleep(4000);
+                //需要进行一次解码  防止重复编码
+                cityName = URLDecoder.decode(cityName, "UTF-8");
                 getCityWeather();
             } catch (Exception e) {
                 e.printStackTrace();

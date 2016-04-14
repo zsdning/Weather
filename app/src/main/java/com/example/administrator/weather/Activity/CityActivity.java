@@ -1,6 +1,5 @@
-package com.example.administrator.weather;
+package com.example.administrator.weather.Activity;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -8,6 +7,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
+import com.example.administrator.weather.R;
 import com.example.administrator.weather.Util.HttpCallbackListener;
 import com.example.administrator.weather.Util.HttpUtil;
 import com.example.administrator.weather.adapter.CityListAdapter;
@@ -20,14 +20,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class CityActivity extends Activity {
+public class CityActivity extends BaseActivity {
     private ListView lv_city;
     List<String> list = new ArrayList<String>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        requestWindowFeature(getWindow().FEATURE_NO_TITLE);
         setContentView(R.layout.activity_city);
         initViews();
         getCities();
@@ -50,7 +49,7 @@ public class CityActivity extends Activity {
             @Override
             public void onFinish(final String response) {
                 Log.d("response", response);
-                //涉及到UI，需要重新回到主线程
+                //adapter涉及到UI，需要重新回到主线程
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
